@@ -84,6 +84,7 @@ app.get('/', function(req, res) {
                     console.log('added')
                 }
             })
+
             res.redirect('/')
 
         } else {
@@ -131,6 +132,12 @@ app.post('/', function(req, res) {
 
 app.post('/delete', function(req, res) {
     const deleteitems = req.body.checkbox
+    const listname = req.body.lists
+    if (listname == 'today') {
+        item
+    } else {
+
+    }
     todoitems.findByIdAndDelete(deleteitems, function(err) {
         if (!err) {
             console.log('succesfully deleted')
