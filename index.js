@@ -2,7 +2,9 @@ const express = require('express')
 
 const bodyparser = require('body-parser');
 const mongoose = require('mongoose');
+const _ = require('lodash')
 const { name } = require('ejs');
+const { get } = require('express/lib/response');
 
 const app = express()
 
@@ -22,15 +24,15 @@ const todoitemschema = new mongoose.Schema({
     name: String
 })
 
-const todoitems = mongoose.model('todoitem', todoitemschema);
+const todoitem = mongoose.model('todoitems', todoitemschema);
 
-const first = new todoitems({
+const first = new todoitem({
     name: 'mango'
 })
-const second = new todoitems({
+const second = new todoitem({
     name: 'apple'
 })
-const third = new todoitems({
+const third = new todoitem({
     name: 'grape'
 })
 
@@ -42,6 +44,8 @@ const listschema = new mongoose.Schema({
 })
 
 const list = mongoose.model('list', listschema)
+
+const aboutContent = 'created by will'
 
 
 
@@ -75,9 +79,9 @@ app.get('/', function(req, res) {
     // var day = today.toLocaleDateString('en-us', options)
     // using (render) to display content when using ejs
 
-    todoitems.find({}, function(err, foundlist) {
+    todoitem.find({}, function(err, foundlist) {
         if (foundlist.length === 0) {
-            todoitems.insertMany(defaultitem, function(err) {
+            todoitem.insertMany(defaultitem, function(err) {
                 if (err) {
                     console.log(err)
                 } else {
@@ -107,7 +111,7 @@ app.post('/', function(req, res) {
     var itemname = req.body.inputitem
     var listname = req.body.lists
 
-    const myitems = new todoitems({
+    const myitems = new todoitem({
             name: itemname
         })
         // using conditional statement to post items on either our home or custom route
@@ -132,20 +136,40 @@ app.post('/', function(req, res) {
 
 app.post('/delete', function(req, res) {
     const deleteitems = req.body.checkbox
-    const listname = req.body.lists
-    if (listname == 'today') {
-        item
+    const listname = req.body.listname
+
+
+
+    // todoitem.findByIdAndRemove(deleteitems, function(err) {
+    //     if (!err) {
+    //         console.log('successfully deleted')
+    //         res.redirect('/')
+    //     }
+    // })
+
+
+    if (listname === 'today') {
+        todoitem.findByIdAndRemove(deleteitems, function(err) {
+            if (!err) {
+                console.log('successfully deleted checked item')
+                res.redirect('/')
+            }
+        })
     } else {
+        list.findOneAndUpdate({ name: listname }, { $pull: { todoitems: { _id: deleteitems } } }, function(err) {
+            if (!err) {
+                res.redirect('/' + listname)
+
+            }
+        })
 
     }
-    todoitems.findByIdAndDelete(deleteitems, function(err) {
-        if (!err) {
-            console.log('succesfully deleted')
-            res.redirect('/')
-        }
-    })
+
+
 
 })
+
+//
 
 // initializing our coding route by also doing,using the same styling
 
@@ -155,7 +179,7 @@ app.post('/delete', function(req, res) {
 
 app.get('/:userid', function(req, res) {
 
-    const userid = req.params.userid
+    const userid = _.lowerCase(req.params.userid)
 
     list.findOne({ name: userid }, function(err, foundlist) {
         if (!err) {
@@ -182,6 +206,9 @@ app.get('/:userid', function(req, res) {
 
 })
 
+app.get('/about', function(req, res) {
+    res.render('about', { about: aboutContent })
+})
 
 
 app.listen(2000, function() {
